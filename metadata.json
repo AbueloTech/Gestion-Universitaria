@@ -1,0 +1,6 @@
+{
+  "name": "UniGrade - Gestión de Notas Universitaria",
+  "description": "Sistema integral de gestión de notas, secciones, horarios, asistencia y analíticas académicas para profesores universitarios.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
