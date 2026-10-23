@@ -9,6 +9,7 @@ import {
   SesionAsistencia,
   StudentCalculatedGrades,
   ParcialGradeData,
+  AcademicNotification,
 } from '../types';
 import {
   initialProfessor,
@@ -19,6 +20,7 @@ import {
   initialGradeRecords,
   initialAsistencias,
 } from '../data/mockData';
+import { initialNotifications } from '../data/mockNotifications';
 import { calculateStudentOverallGrades } from '../utils/gradeCalculations';
 
 interface AppContextType {
@@ -88,6 +90,15 @@ interface AppContextType {
   saveAsistenciaSesion: (sesion: Omit<SesionAsistencia, 'id'> & { id?: string }) => void;
   deleteAsistenciaSesion: (id: string) => void;
 
+  // Notifications
+  notifications: AcademicNotification[];
+  unreadNotificationsCount: number;
+  addNotification: (notification: Omit<AcademicNotification, 'id' | 'creadaEn' | 'leida'>) => AcademicNotification;
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  toggleNotificationRead: (id: string) => void;
+  deleteNotification: (id: string) => void;
+
   // System
   resetToDefaults: () => void;
   exportDatabaseJSON: () => string;
@@ -105,14 +116,21 @@ const STORAGE_KEYS = {
   STUDENTS: 'unigrade_students_v1',
   GRADES: 'unigrade_grades_v1',
   ASISTENCIAS: 'unigrade_asistencias_v1',
+  NOTIFICATIONS: 'unigrade_notifications_v1',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.AUTH);
-    return saved ? JSON.parse(saved) : true; // default logged in for friendly evaluation, can test logout anytime
-  });
+  // Auth state: strictly false by default. Every session MUST authenticate through LoginView
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // Clear any legacy auto-auth keys so credentials are required unconditionally
+  useEffect(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.AUTH);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const [professor, setProfessor] = useState<ProfessorProfile>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.PROFESSOR);
@@ -158,10 +176,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : initialAsistencias;
   });
 
-  // Sync with LocalStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(isAuthenticated));
-  }, [isAuthenticated]);
+  const [notifications, setNotifications] = useState<AcademicNotification[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
+    return saved ? JSON.parse(saved) : initialNotifications;
+  });
+
+  // Sync with LocalStorage (credentials required on every reload/launch)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.PROFESSOR, JSON.stringify(professor));
@@ -191,9 +211,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(STORAGE_KEYS.ASISTENCIAS, JSON.stringify(asistencias));
   }, [asistencias]);
 
-  // Auth actions
-  const login = (pinOrPass: string) => {
-    const valid = !professor.pinOrPassword || pinOrPass.trim() === professor.pinOrPassword.trim() || pinOrPass === 'admin';
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notifications));
+  }, [notifications]);
+
+  // Notifications logic
+  const unreadNotificationsCount = useMemo(() => {
+    return notifications.filter((n) => !n.leida).length;
+  }, [notifications]);
+
+  const addNotification = (notifData: Omit<AcademicNotification, 'id' | 'creadaEn' | 'leida'>): AcademicNotification => {
+    const newNotif: AcademicNotification = {
+      ...notifData,
+      id: `notif-${Date.now()}`,
+      creadaEn: new Date().toISOString(),
+      leida: false,
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+    return newNotif;
+  };
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, leida: true } : n))
+    );
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, leida: true })));
+  };
+
+  const toggleNotificationRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, leida: !n.leida } : n))
+    );
+  };
+
+  const deleteNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  // Auth actions with strict password requirement
+  const login = (pinOrPass: string): boolean => {
+    // A non-empty password is strictly required. No login without password!
+    if (!pinOrPass || typeof pinOrPass !== 'string') {
+      return false;
+    }
+    const inputClean = pinOrPass.trim();
+    if (inputClean.length === 0) {
+      return false;
+    }
+
+    const currentPass = (professor.pinOrPassword || 'admin').trim();
+    // Validate strictly against the professor's configured password (no backdoors or static fallbacks)
+    const valid = inputClean === currentPass;
     if (valid) {
       setIsAuthenticated(true);
       return true;
@@ -206,7 +277,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProfessorProfile = (data: Partial<ProfessorProfile>) => {
-    setProfessor((prev) => ({ ...prev, ...data }));
+    // Ensure password cannot be cleared to empty
+    const sanitized = { ...data };
+    if (sanitized.pinOrPassword !== undefined) {
+      const trimmedPass = sanitized.pinOrPassword.trim();
+      sanitized.pinOrPassword = trimmedPass.length > 0 ? trimmedPass : 'admin';
+    }
+    setProfessor((prev) => ({ ...prev, ...sanitized }));
   };
 
   // Active helpers
@@ -472,6 +549,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setStudents(initialStudents);
     setGradeRecords(initialGradeRecords);
     setAsistencias(initialAsistencias);
+    setNotifications(initialNotifications);
     localStorage.clear();
   };
 
@@ -484,6 +562,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       students,
       gradeRecords,
       asistencias,
+      notifications,
       exportedAt: new Date().toISOString(),
     };
     return JSON.stringify(backup, null, 2);
@@ -499,6 +578,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (data.students) setStudents(data.students);
       if (data.gradeRecords) setGradeRecords(data.gradeRecords);
       if (data.asistencias) setAsistencias(data.asistencias);
+      if (data.notifications) setNotifications(data.notifications);
       return true;
     } catch {
       return false;
@@ -548,6 +628,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateStudentParcialGrade,
         saveAsistenciaSesion,
         deleteAsistenciaSesion,
+        notifications,
+        unreadNotificationsCount,
+        addNotification,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        toggleNotificationRead,
+        deleteNotification,
         resetToDefaults,
         exportDatabaseJSON,
         importDatabaseJSON,

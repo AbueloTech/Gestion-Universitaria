@@ -128,3 +128,31 @@ export interface StudentCalculatedGrades {
   nivel: NivelNota;
   isAprobado: boolean;
 }
+
+export type TipoNotificacion = 'entrega_proxima' | 'cambio_horario' | 'alerta_academica';
+export type PrioridadNotificacion = 'urgente' | 'alta' | 'media' | 'baja';
+
+export interface AcademicNotification {
+  id: string;
+  tipo: TipoNotificacion;
+  titulo: string;
+  descripcion: string;
+  materiaId?: string;
+  seccionId?: string;
+  fechaEvento?: string; // e.g. "2026-10-24"
+  horaEvento?: string; // e.g. "23:59" o "08:00"
+  aulaAnterior?: string; // Para cambios de horario
+  aulaNueva?: string; // Para cambios de horario
+  horarioAnterior?: string;
+  horarioNuevo?: string;
+  prioridad: PrioridadNotificacion;
+  leida: boolean;
+  creadaEn: string;
+  accion?: {
+    label: string;
+    tabTarget: 'dashboard' | 'materias' | 'alumnos' | 'vaciado' | 'asistencia' | 'estadisticas' | 'configuracion';
+    materiaId?: string;
+    seccionId?: string;
+  };
+}
+

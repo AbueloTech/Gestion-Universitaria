@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { SplashScreen } from './components/SplashScreen';
 import { LoginView } from './components/LoginView';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -18,6 +19,9 @@ import { SQLiteModal } from './components/SQLiteModal';
 const AppContent: React.FC = () => {
   const { isAuthenticated, activeTab } = useApp();
 
+  // Splash screen state - begins active for initial startup
+  const [showSplash, setShowSplash] = useState(true);
+
   // Modals state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isActaModalOpen, setIsActaModalOpen] = useState(false);
@@ -25,11 +29,22 @@ const AppContent: React.FC = () => {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isSQLiteModalOpen, setIsSQLiteModalOpen] = useState(false);
 
-  // If professor is not authenticated, show the login portal
-  if (!isAuthenticated) {
-    return <LoginView />;
+  // 1. Initial Splash Screen (20 seconds with central illuminated rotating GitHub-style orb)
+  if (showSplash) {
+    return (
+      <SplashScreen 
+        durationSeconds={20} 
+        onComplete={() => setShowSplash(false)} 
+      />
+    );
   }
 
+  // 2. Strict Professor Login Portal
+  if (!isAuthenticated) {
+    return <LoginView onShowSplash={() => setShowSplash(true)} />;
+  }
+
+  // 3. Main Authenticated Academic Application
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* Top Navbar */}
@@ -37,6 +52,7 @@ const AppContent: React.FC = () => {
         onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         onOpenActaModal={() => setIsActaModalOpen(true)}
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
+        onShowSplash={() => setShowSplash(true)}
       />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto">

@@ -12,19 +12,23 @@ import {
   X,
   Printer,
   ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import { Avatar } from './common/Avatar';
+import { NotificationBellDropdown } from './notifications/NotificationBellDropdown';
 
 interface NavbarProps {
   onOpenMobileMenu: () => void;
   onOpenActaModal: () => void;
   onOpenProfileModal: () => void;
+  onShowSplash?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenMobileMenu,
   onOpenActaModal,
   onOpenProfileModal,
+  onShowSplash,
 }) => {
   const {
     professor,
@@ -129,6 +133,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Semestre: <strong className="text-white">{professor.semestreActivo}</strong></span>
             </div>
 
+            {/* Notification Bell Dropdown */}
+            <NotificationBellDropdown />
+
             {/* Quick print button */}
             <button
               onClick={onOpenActaModal}
@@ -175,6 +182,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <User className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Perfil y Ajustes de Profesor</span>
                   </button>
+
+                  {onShowSplash && (
+                    <button
+                      onClick={onShowSplash}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-xs text-indigo-300 hover:bg-slate-800 hover:text-indigo-200 text-left transition"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Ver Intro Splash Luminosa</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={logout}

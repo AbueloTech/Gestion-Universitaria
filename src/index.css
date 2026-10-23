@@ -26,6 +26,68 @@
   background: rgba(99, 102, 241, 0.6);
 }
 
+/* Splash Screen & Luminous Animations (GitHub Repo Creation Style) */
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+    filter: drop-shadow(0 0 25px rgba(99, 102, 241, 0.6));
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 45px rgba(6, 182, 212, 0.85));
+  }
+}
+
+@keyframes rippleWave {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 6s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: spinReverse 8s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.animate-ripple {
+  animation: rippleWave 3s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
 /* Print optimizations for official grade actas */
 @media print {
   body {

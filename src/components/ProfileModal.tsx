@@ -146,7 +146,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfessorProfile(form);
+    const finalForm = {
+      ...form,
+      pinOrPassword: form.pinOrPassword && form.pinOrPassword.trim() ? form.pinOrPassword.trim() : 'admin',
+    };
+    updateProfessorProfile(finalForm);
     setSaved(true);
     setTimeout(() => {
       setSaved(false);
@@ -571,8 +575,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
               placeholder="admin"
               className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono"
             />
-            <span className="text-[10px] text-slate-500 mt-1 block">
-              Contraseña requerida en la pantalla de inicio de sesión (por defecto: <code>admin</code>)
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              Contraseña de seguridad para acceder a la aplicación. Al cambiarla, la clave por defecto (<code className="text-indigo-300">admin</code>) quedará revocada inmediatamente.
             </span>
           </div>
 

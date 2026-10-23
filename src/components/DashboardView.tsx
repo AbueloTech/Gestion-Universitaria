@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   calculateSectionStats,
@@ -19,8 +19,11 @@ import {
   Sparkles,
   BookOpen,
 } from 'lucide-react';
+import { NotificationsWidget } from './notifications/NotificationsWidget';
+import { CreateNotificationModal } from './notifications/CreateNotificationModal';
 
 export const DashboardView: React.FC = () => {
+  const [isCreateNotifOpen, setIsCreateNotifOpen] = useState(false);
   const {
     professor,
     materias,
@@ -308,6 +311,9 @@ export const DashboardView: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Notifications and Alerts System */}
+      <NotificationsWidget onOpenCreateModal={() => setIsCreateNotifOpen(true)} />
 
       {/* Grid: Comportamiento por Secciones & Distribución de Notas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -728,6 +734,11 @@ export const DashboardView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal to create a new notification / alert */}
+      {isCreateNotifOpen && (
+        <CreateNotificationModal onClose={() => setIsCreateNotifOpen(false)} />
+      )}
     </div>
   );
 };

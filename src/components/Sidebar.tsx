@@ -27,7 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenBackupModal,
   onOpenSQLiteModal,
 }) => {
-  const { activeTab, setActiveTab, students, materias, secciones, calculatedStudents } = useApp();
+  const { activeTab, setActiveTab, students, materias, secciones, calculatedStudents, unreadNotificationsCount } = useApp();
 
   // Count at-risk students for alert badge
   const atRiskCount = calculatedStudents.filter((s) => s.nivel === 'en_riesgo' || s.nivel === 'reprobado').length;
@@ -38,7 +38,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Dashboard General',
       subtitle: 'Resumen y Horario Semanal',
       icon: LayoutDashboard,
-      badge: null,
+      badge: unreadNotificationsCount > 0 ? `${unreadNotificationsCount} aviso${unreadNotificationsCount > 1 ? 's' : ''}` : null,
+      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
     },
     {
       id: 'materias',
